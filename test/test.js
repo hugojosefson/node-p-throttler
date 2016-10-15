@@ -1,9 +1,9 @@
 'use strict';
 
 var expect = require('expect.js');
-var PThtroller = require('../');
+var PThtrottler = require('../');
 
-describe('PThtroller', function () {
+describe('PThtrottler', function () {
     var timeout;
 
     afterEach(function () {
@@ -15,7 +15,7 @@ describe('PThtroller', function () {
 
     describe('.enqueue', function () {
         it('return a promise', function () {
-            var throttler = new PThtroller();
+            var throttler = new PThtrottler();
             var promise;
 
             promise = throttler.enqueue(function () { return 'foo'; });
@@ -30,7 +30,7 @@ describe('PThtroller', function () {
         });
 
         it('should call the function and fulfill the promise accordingly', function () {
-            var throttler = new PThtroller();
+            var throttler = new PThtrottler();
 
             return throttler.enqueue(function () { return 'foo'; })
             .then(function (ret) {
@@ -47,7 +47,7 @@ describe('PThtroller', function () {
         });
 
         it('should work with functions that return values syncronously', function () {
-            var throttler = new PThtroller();
+            var throttler = new PThtrottler();
 
             throttler.enqueue(function () { return 'foo'; })
             .then(function (ret) {
@@ -56,7 +56,7 @@ describe('PThtroller', function () {
         });
 
         it('should work with functions that throw syncronously', function () {
-            var throttler = new PThtroller();
+            var throttler = new PThtrottler();
 
             return throttler.enqueue(function () { throw new Error('bar'); })
             .then(function () {
@@ -68,7 +68,7 @@ describe('PThtroller', function () {
         });
 
         it('should assume the default concurrency when a type is not specified', function (next) {
-            var throttler = new PThtroller(1);
+            var throttler = new PThtrottler(1);
             var calls = 0;
 
             throttler.enqueue(function () { calls++; return new Promise(function () {}); });
@@ -81,7 +81,7 @@ describe('PThtroller', function () {
         });
 
         it('should assume the default concurrency when a type is not known', function (next) {
-            var throttler = new PThtroller(1);
+            var throttler = new PThtrottler(1);
             var calls = 0;
 
             throttler.enqueue(function () { calls++; return new Promise(function () {}); }, 'foo_type');
@@ -94,7 +94,7 @@ describe('PThtroller', function () {
         });
 
         it('should have different slots when type is not passed or is not known', function (next) {
-            var throttler = new PThtroller(1);
+            var throttler = new PThtrottler(1);
             var calls = 0;
 
             throttler.enqueue(function () { calls++; return new Promise(function () {}); });
@@ -109,7 +109,7 @@ describe('PThtroller', function () {
         });
 
         it('should use the configured concurrency for the type', function (next) {
-            var throttler = new PThtroller(1, {
+            var throttler = new PThtrottler(1, {
                 foo: 2,
                 bar: 3
             });
@@ -139,7 +139,7 @@ describe('PThtroller', function () {
 
     describe('.abort', function () {
         it('should clear the whole queue', function (next) {
-            var throttler = new PThtroller(1, {
+            var throttler = new PThtrottler(1, {
                 foo: 2
             });
             var calls = 0;
@@ -161,7 +161,7 @@ describe('PThtroller', function () {
         });
 
         it('should wait for currently running functions to finish', function (next) {
-            var throttler = new PThtroller(1, {
+            var throttler = new PThtrottler(1, {
                 foo: 2
             });
             var calls = [];
@@ -197,7 +197,7 @@ describe('PThtroller', function () {
 
     describe('scheduler', function () {
         it('should start remaining tasks when one ends', function (next) {
-            var throttler = new PThtroller(1, {
+            var throttler = new PThtrottler(1, {
                 foo: 2
             });
             var calls = 0;
@@ -215,7 +215,7 @@ describe('PThtroller', function () {
         });
 
         it('should respect the enqueue order', function (next) {
-            var throttler = new PThtroller(1);
+            var throttler = new PThtrottler(1);
             var defCalls = [];
             var fooCalls = [];
 
@@ -257,7 +257,7 @@ describe('PThtroller', function () {
         });
 
         it('should wait for one slot in every type on a multi-type function', function (next) {
-            var throttler = new PThtroller(1, {
+            var throttler = new PThtrottler(1, {
                 foo: 1,
                 bar: 2
             });
@@ -278,7 +278,7 @@ describe('PThtroller', function () {
         });
 
         it('should free all type slots when finished running a function', function (next) {
-            var throttler = new PThtroller(1, {
+            var throttler = new PThtrottler(1, {
                 foo: 1,
                 bar: 2
             });
