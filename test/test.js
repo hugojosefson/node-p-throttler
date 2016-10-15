@@ -137,6 +137,56 @@ describe('PThtrottler', function () {
         });
     });
 
+    describe('.push', function () {
+        it('is the same as .enqueue', function () {
+            expect(PThtrottler.prototype.push).to.equal(PThtrottler.prototype.enqueue);
+        });
+    });
+
+    describe('.unshift', function () {
+        it('returns a promise', function () {
+            var throttler = new PThtrottler();
+            var promise;
+
+            promise = throttler.unshift(function () { return 'foo'; });
+
+            expect(promise).to.be.an('object');
+            expect(promise.then).to.be.a('function');
+
+            promise = throttler.unshift(function () { return Promise.resolve('foo'); });
+
+            expect(promise).to.be.an('object');
+            expect(promise.then).to.be.a('function');
+        });
+
+        it('should add function to first place in queue', function (next) {
+            var throttler = new PThtrottler(1);
+            var defCalls = [];
+            var fooCalls = [];
+
+            [1, 2, 3, 4, 5].forEach(function (n) {
+                throttler.unshift(function () {
+                    defCalls.push(n);
+                });
+            });
+
+            [1, 2, 3, 4, 5].forEach(function (n) {
+                throttler.unshift(function () {
+                    fooCalls.push(n);
+                });
+            });
+
+            timeout = setTimeout(function () {
+                // The very first entry is always processed first, even if subsequent .unshift()
+                // adds more, because it's already started.
+                expect(defCalls).to.eql([1, 5, 4, 3, 2]);
+                expect(fooCalls).to.eql([5, 4, 3, 2, 1]);
+                next();
+            }, 25);
+        });
+
+    });
+
     describe('.abort', function () {
         it('should clear the whole queue', function (next) {
             var throttler = new PThtrottler(1, {

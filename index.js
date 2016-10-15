@@ -13,38 +13,55 @@ function PThrottler(defaultConcurrency, types) {
 
 // -----------------
 
-PThrottler.prototype.enqueue = function (func, type) {
-    var deferred = {};
-    var promise;
+/**
+ * Creates an enqueue function, using insertMethodName to insert each entry into the array.
+ *
+ * @param insertMethodName name of the method on Array.prototype to use for inserting the entry. For
+ * example 'push'.
+ * @return {Function} the enqueue function.
+ */
+function createEnqueueFunction(insertMethodName) {
 
-    promise = new Promise(function (resolve, reject) {
-        var types;
-        var entry;
+    /**
+     * The enqueue function.
+     */
+    return function (func, type) {
+        var deferred = {};
+        var promise;
 
-        deferred.resolve = resolve;
-        deferred.reject = reject;
+        promise = new Promise(function (resolve, reject) {
+            var types;
+            var entry;
 
-        type = type || '';
-        types = Array.isArray(type) ? type : [type];
-        entry = {
-            func: func,
-            types: types,
-            deferred: deferred
-        };
-        // Add the entry to all the types queues
-        types.forEach(function (type) {
-            var queue = this._queue[type] = this._queue[type] || [];
-            queue.push(entry);
-        }, this);
+            deferred.resolve = resolve;
+            deferred.reject = reject;
 
-        // Process the entry shortly later so that handlers can be attached to the returned promise
-        setImmediate(this._processEntry.bind(this, entry));
-    }.bind(this));
+            type = type || '';
+            types = Array.isArray(type) ? type : [type];
+            entry = {
+                func: func,
+                types: types,
+                deferred: deferred
+            };
+            // Add the entry to all the types queues
+            types.forEach(function (type) {
+                var queue = this._queue[type] = this._queue[type] || [];
+                queue[insertMethodName](entry);
+            }, this);
 
-    deferred.promise = promise;
+            // Process the entry shortly later so that handlers can be attached to the returned promise
+            setImmediate(this._processEntry.bind(this, entry));
+        }.bind(this));
 
-    return promise;
-};
+        deferred.promise = promise;
+
+        return promise;
+    };
+}
+
+PThrottler.prototype.unshift = createEnqueueFunction('unshift');
+PThrottler.prototype.push = createEnqueueFunction('push');
+PThrottler.prototype.enqueue = PThrottler.prototype.push;
 
 PThrottler.prototype.abort = function () {
     var promises;
